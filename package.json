@@ -1,0 +1,23 @@
+{
+  "name": "csv-to-array-browser",
+  "version": "1.0.4",
+  "description": "converts csv data to javascript array",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm test"
+  },
+  "keywords": [
+    "csv",
+    "json",
+    "array",
+    "react",
+    "javascript",
+    "csv parser",
+    "parse",
+    "csvtojson",
+    "converttojson"
+  ],
+  "author": "rexben",
+  "license": "ISC",
+  "dependencies": {}
+}
