@@ -12,13 +12,4 @@ export default defineConfig([
     treeshake: true,
     splitting: false,
   },
-  // IIFE (single file) for <script src="..."> via CDN
-  {
-    entry: { index: "src/index.ts" },
-    format: ["iife"],
-    globalName: "ParseWorkbook", // window.ParseWorkbook
-    outDir: "dist/global",
-    sourcemap: true,
-    minify: true,
-  },
 ]);
