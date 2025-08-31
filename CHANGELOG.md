@@ -1,3 +1,9 @@
+## [2.2.0](https://github.com/Rexben001/csv-to-array/compare/v2.1.0...v2.2.0) (2025-08-31)
+
+### Features
+
+* support trim cells ([36a6396](https://github.com/Rexben001/csv-to-array/commit/36a639686945e05e33a4f0cfc20b3f234536b761))
+
 ## 1.0.0 (2025-08-31)
 
 ### Features
