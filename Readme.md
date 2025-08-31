@@ -66,6 +66,7 @@ console.log(rows);
 | `skipEmptyLines`     | `boolean`            | `true`     | Drop empty rows.                                                            |
 | `defval`             | `unknown`            | `null`     | Value to use when a row has fewer cells than headers.                       |
 | `inferTypes`         | `boolean`            | `false`    | Coerce `"true"/"false" → boolean`, `"null" → null`, number-like strings → numbers; otherwise leave as strings. |
+| `trimCells`         | `boolean`            | `true`    | Trims cells when `true` |
 
 **The parser automatically strips a UTF-8 BOM at the start of the file.**
 
@@ -151,6 +152,19 @@ name,age\r\nAlice,30\r\nBob,28\r\n`;
 await parseCSV(csv, { comment: "#" });
 // [
 //   { name: "Alice", age: "30" },
+//   { name: "Bob", age: "28" }
+// ]
+```
+
+### 8) Trim cells
+
+```ts
+const csv = `# header
+name,age\r\n Alice ,30\r\nBob,28\r\n`;
+
+await parseCSV(csv, { trimCells: "false" });
+// [
+//   { name: " Alice ", age: "30" },
 //   { name: "Bob", age: "28" }
 // ]
 ```

@@ -13,6 +13,8 @@ export interface CsvOptions {
   defval?: unknown;
   /** Try to coerce numbers/booleans/null (default false) */
   inferTypes?: boolean;
+  /** Trim cells (default true) */
+  trimCells?: boolean;
 }
 
 export type CsvRow = Record<string, unknown>;
@@ -21,41 +23,55 @@ export async function parseCSV(
   input: File | Blob | ArrayBuffer | Buffer | string,
   opts: CsvOptions = {}
 ): Promise<CsvRow[]> {
-  const { defval = null, inferTypes = false } = opts;
+  const {
+    headers: headersOption = true,
+    preserveHeaderCase = false,
+    comment,
+    skipEmptyLines = true,
+    defval = null,
+    inferTypes = false,
+    trimCells = true,
+  } = opts;
 
   const text = await toText(input);
   const cleaned = stripBOM(text);
   const delimiter = opts.delimiter ?? detectDelimiter(cleaned);
   const rows = parseRows(cleaned, delimiter, {
-    comment: opts.comment,
+    comment,
     skipEmptyLines: opts.skipEmptyLines ?? true,
   });
 
   if (!rows.length) return [];
 
-  let headers: string[];
+  let headerNames: string[];
   let dataStart = 0;
 
-  if (Array.isArray(opts.headers)) {
-    headers = normalizeHeaders(opts.headers, opts.preserveHeaderCase);
+  if (Array.isArray(headersOption)) {
+    headerNames = normalizeHeaders(headersOption, preserveHeaderCase);
     dataStart = 1; // <-- change this from 0 to 1 to drop the first CSV line
-  } else if (opts.headers === false) {
-    headers = rows[0].map((_, i) => `c${i}`);
+  } else if (headersOption === false) {
+    headerNames = rows[0].map((_, i) => `c${i}`);
   } else {
-    headers = normalizeHeaders(rows[0], opts.preserveHeaderCase);
+    headerNames = normalizeHeaders(rows[0], preserveHeaderCase);
     dataStart = 1;
+  }
+
+  const width = Math.max(headerNames.length, widestRow(rows));
+  if (headerNames.length < width) {
+    for (let i = headerNames.length; i < width; i++) headerNames.push(`c${i}`);
   }
 
   const out: CsvRow[] = [];
   for (let i = dataStart; i < rows.length; i++) {
-    const r = rows[i];
-    const obj: CsvRow = {};
-    for (let j = 0; j < headers.length; j++) {
-      const key = headers[j] ?? `c${j}`;
-      const raw = r[j] ?? defval;
-      obj[key] = inferTypes ? convertTOJsTypes(raw) : raw;
+    const row = rows[i];
+    const csvRow: CsvRow = {};
+    for (let c = 0; c < width; c++) {
+      const key = headerNames[c];
+      let cell = row[c];
+      if (typeof cell === "string" && trimCells) cell = cell.trim();
+      csvRow[key] = inferTypes ? convertToJsTypes(cell) : cell ?? defval;
     }
-    out.push(obj);
+    out.push(csvRow);
   }
   return out;
 }
@@ -116,7 +132,7 @@ function normalizeHeaders(headers: string[], preserve?: boolean): string[] {
   });
 }
 
-function convertTOJsTypes(v: unknown): unknown {
+function convertToJsTypes(v: unknown): unknown {
   if (v == null) return v;
   if (typeof v !== "string") return v;
   const s = v.trim();
@@ -124,8 +140,8 @@ function convertTOJsTypes(v: unknown): unknown {
   if (/^(true|false)$/i.test(s)) return /^true$/i.test(s);
   if (/^null$/i.test(s)) return null;
   if (/^-?\d+(\.\d+)?([eE][+-]?\d+)?$/.test(s)) {
-    const num = Number(s);
-    if (!Number.isNaN(num)) return num;
+    const n = Number(s);
+    if (!Number.isNaN(n)) return n;
   }
   return s;
 }
@@ -200,6 +216,13 @@ function parseRows(
   pushField();
   if (row.length > 1 || row[0] !== "") pushRow();
   return lines;
+}
+
+function widestRow(rows: string[][]): number {
+  let w = 0;
+  for (let i = 0; i < rows.length; i++)
+    if (rows[i].length > w) w = rows[i].length;
+  return w;
 }
 
 export default parseCSV;

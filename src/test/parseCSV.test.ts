@@ -118,6 +118,20 @@ true,null,42,3.14`;
     expect(rows[0]).toEqual({ name: "Alice", age: "30" });
   });
 
+  test("trims cells by default", async () => {
+    const csv = `name , age \n Alice , 30 \n Bob , 28 `;
+    const rows = await parseCSV(csv);
+    expect(rows[0]).toEqual({ name: "Alice", age: "30" });
+    expect(rows[1]).toEqual({ name: "Bob", age: "28" });
+  });
+
+  test("trimCells=false preserves whitespace in cells", async () => {
+    const csv = `name , age \n Alice , 30 \n Bob , 28 `;
+    const rows = await parseCSV(csv, { trimCells: false });
+    expect(rows[0]).toEqual({ name: " Alice ", age: " 30 " });
+    expect(rows[1]).toEqual({ name: " Bob ", age: " 28 " });
+  });
+
   test.runIf(typeof Buffer !== "undefined")(
     "accepts Node Buffer input (if available)",
     async () => {
